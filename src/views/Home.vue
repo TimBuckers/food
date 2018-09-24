@@ -18,7 +18,10 @@
             </v-card>
           </template>
         </v-data-table>
-        <v-btn @click="newList">New</v-btn>
+        <!-- <v-btn @click="newList">New</v-btn> -->
+        <v-btn @click="newList" dark fab fixed bottom right color="#126287">
+          <v-icon>add</v-icon>
+        </v-btn>
       </v-layout>
     </v-slide-y-transition>
   </v-container>
