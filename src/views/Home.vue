@@ -5,7 +5,10 @@
         <v-data-table :headers="headers" :items="lists" hide-actions class="elevation-1">
           <template slot="items" slot-scope="props">
             <tr @click="props.expanded = !props.expanded">
-              <td>{{ props.item.type }}</td>
+              <td>
+                <v-icon v-if="props.item.type == 'lunch'">restaurant</v-icon>
+                <v-icon v-if="props.item.type == 'dinner'">local_cafe</v-icon>
+              </td>
               <td>{{ toDate(props.item.created_at) }}</td>
               <td>{{ toDate(props.item.closed_at) }}</td>
               <td>{{ getUserAmount(props.item.users)}}</td>
@@ -18,10 +21,18 @@
             </v-card>
           </template>
         </v-data-table>
-        <!-- <v-btn @click="newList">New</v-btn> -->
-        <v-btn @click="newList" dark fab fixed bottom right color="#126287">
-          <v-icon>add</v-icon>
-        </v-btn>
+        <v-speed-dial fixed bottom right>
+          <v-btn slot="activator" color="blue darken-2" dark fab>
+            <v-icon>add</v-icon>
+            <v-icon>close</v-icon>
+          </v-btn>
+          <v-btn @click="newList('lunch')" fab dark small color="green">
+            <v-icon>restaurant</v-icon>
+          </v-btn>
+          <v-btn @click="newList('dinner')" fab dark small color="red">
+            <v-icon>local_cafe</v-icon>
+          </v-btn>
+        </v-speed-dial>
       </v-layout>
     </v-slide-y-transition>
   </v-container>
@@ -36,7 +47,7 @@ export default {
     return {
       loading: true,
       headers: [
-        { text: "Type", value: "type", sortable: false },
+        { text: "", value: "type", sortable: false },
         { text: "Opened at", value: "created_at", sortable: false },
         { text: "Closed at", value: "closed_at", sortable: false },
         { text: "Amount", value: "amount", sortable: false },
@@ -45,22 +56,29 @@ export default {
       lists: []
     };
   },
-  mounted() { },
+  mounted() {},
   methods: {
     getUserAmount(users) {
       return users.length;
     },
-    newList() {
+    newList(type) {
       let list = {
         created_at: new Date(),
         users: [],
-        type: "lunch"
+        type: type
       };
-      this.$db
-        .collection("lists")
-        .add(list)
-        .then(response => {
-          // @todo: automatically open new list
+
+      this.getPersistentUsers()
+        .then(users => {
+          users.forEach(doc => {
+            list.users.push(
+              Object.assign({ signed_up_at: new Date() }, doc.data())
+            );
+          });
+        })
+        .then(() => {
+          console.log(list);
+          this.$db.collection("lists").add(list);
         });
     },
     toDate(item) {
@@ -73,6 +91,12 @@ export default {
       return users.filter(user => {
         return user.veggy;
       }).length;
+    },
+    getPersistentUsers() {
+      return this.$db
+        .collection("users")
+        .where("persistent", "==", true)
+        .get();
     }
   },
 
