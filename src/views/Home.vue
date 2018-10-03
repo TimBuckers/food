@@ -1,51 +1,35 @@
 <template>
-  <v-container fluid>
-    <v-slide-y-transition mode="out-in">
-      <v-layout column align-center>
-        <v-data-table :headers="headers" :items="lists" hide-actions class="elevation-1">
-          <template slot="items" slot-scope="props">
-            <tr @click="props.expanded = !props.expanded">
-              <td>
-                <v-icon v-if="props.item.type == 'lunch'">restaurant</v-icon>
-                <v-icon v-if="props.item.type == 'dinner'">local_cafe</v-icon>
-              </td>
-              <td>{{ toDate(props.item.created_at) }}</td>
-              <td>{{ toDate(props.item.closed_at) }}</td>
-              <td>{{ getUserAmount(props.item.users)}}</td>
-              <td>{{ getVeggyAmount(props.item.users) }}</td>
-            </tr>
-          </template>
-          <template slot="expand" slot-scope="props">
-            <v-card flat>
-              <food-list :id=props.item.id :listProp=props.item></food-list>
-            </v-card>
-          </template>
-        </v-data-table>
-        <v-speed-dial fixed bottom right>
-          <v-btn slot="activator" color="blue darken-2" dark fab>
-            <v-icon>add</v-icon>
-            <v-icon>close</v-icon>
-          </v-btn>
-          <v-btn @click="newList('lunch')" fab dark small color="green">
-            <v-icon>restaurant</v-icon>
-          </v-btn>
-          <v-btn @click="newList('dinner')" fab dark small color="red">
-            <v-icon>local_cafe</v-icon>
-          </v-btn>
-        </v-speed-dial>
-      </v-layout>
-    </v-slide-y-transition>
+  <v-container fluid grid-list-lg>
+    <v-layout row wrap>
+
+      <food-card v-for="(item,idx) in lists" :key=idx :item=item></food-card>
+      <!-- <food-list v-for="(item,idx) in lists" :key=idx :id=item.id /> -->
+    </v-layout>
+
+    <v-speed-dial fixed bottom right>
+      <v-btn slot="activator" color="blue darken-2" dark fab>
+        <v-icon>add</v-icon>
+        <v-icon>close</v-icon>
+      </v-btn>
+      <v-btn @click="newList('lunch')" fab dark small color="green">
+        <v-icon>restaurant</v-icon>
+      </v-btn>
+      <v-btn @click="newList('dinner')" fab dark small color="red">
+        <v-icon>local_cafe</v-icon>
+      </v-btn>
+    </v-speed-dial>
   </v-container>
 </template>
 
 <script>
+import FoodCard from "./FoodCard.vue";
 import FoodList from "./FoodList.vue";
 export default {
   name: "Overview",
-  components: { FoodList },
+  components: { FoodList, FoodCard },
   data() {
     return {
-      loading: true,
+      show: true,
       headers: [
         { text: "", value: "type", sortable: false },
         { text: "Opened at", value: "created_at", sortable: false },
@@ -58,16 +42,12 @@ export default {
   },
   mounted() {},
   methods: {
-    getUserAmount(users) {
-      return users.length;
-    },
     newList(type) {
       let list = {
         created_at: new Date(),
         users: [],
         type: type
       };
-
       this.getPersistentUsers()
         .then(users => {
           users.forEach(doc => {
@@ -77,21 +57,13 @@ export default {
           });
         })
         .then(() => {
-          console.log(list);
-          this.$db.collection("lists").add(list);
+          return this.$db.collection("lists").add(list);
+        })
+        .then(response => {
+          list.id = response.id;
         });
     },
-    toDate(item) {
-      if (item == undefined) {
-        return "-";
-      }
-      return item.toDate().toLocaleTimeString("nl-NL");
-    },
-    getVeggyAmount(users) {
-      return users.filter(user => {
-        return user.veggy;
-      }).length;
-    },
+
     getPersistentUsers() {
       return this.$db
         .collection("users")
