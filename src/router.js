@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
-import FoodList from './views/FoodList.vue'
+import Dashboard from './views/Dashboard.vue'
 Vue.use(Router)
 
 export default new Router({
@@ -14,10 +14,9 @@ export default new Router({
       component: Home
     },
     {
-      path: '/list',
-      name: 'list',
-      component: FoodList,
-      props: true
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard,
     },
     {
       path: '/about',
